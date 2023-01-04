@@ -11,6 +11,7 @@ import pyautogui
 import subprocess
 import requests
 import http
+import pyautogui
 
 
 class Login(QMainWindow):
@@ -78,37 +79,62 @@ class dashboard(QMainWindow):
         super(dashboard,self).__init__()
         loadUi("interface1.ui", self)
 
-        self.timer1 = QTimer(self)
-        self.timer1.setInterval(1000)
-        self.timer1.timeout.connect(self.update_time)
         self.time_label = self.findChild(QtWidgets.QLabel, "time_display")
         self.time_label.setText('00:00:00')
         self.start_button = self.findChild(QtWidgets.QPushButton, "start_button")
         self.stop_button = self.findChild(QtWidgets.QPushButton, "stop_button")
-        self.start_button.clicked.connect(self.start)
-        self.stop_button.clicked.connect(self.stop)
+        self.start_button.clicked.connect(self.start_function)
+        self.stop_button.clicked.connect(self.stop_function)
         # Initialize the elapsed time to 0
         self.elapsed_time = 0
 
         # Get a reference to the table widget
         table_widget = self.findChild(QTableWidget, "tableWidget")
+        holiday_table = self.findChild(QTableWidget, "holiday_table")
+        holiday_table.setItem(0, 0, QTableWidgetItem("New Year Day"))
+        holiday_table.setItem(0, 1, QTableWidgetItem("07/04/2022"))
+        holiday_table.setItem(0, 2, QTableWidgetItem("Monday"))
+        holiday_table.setItem(1, 0, QTableWidgetItem("Memorial Day"))
+        holiday_table.setItem(1, 1, QTableWidgetItem("05/30/2022"))
+        holiday_table.setItem(1, 2, QTableWidgetItem("Monday"))
+        holiday_table.setItem(2, 0, QTableWidgetItem("Independence Day "))
+        holiday_table.setItem(2, 1, QTableWidgetItem("07/04/2022"))
+        holiday_table.setItem(2, 2, QTableWidgetItem("Monday"))
+        holiday_table.setItem(3, 0, QTableWidgetItem("Labor Day"))
+        holiday_table.setItem(3, 1, QTableWidgetItem("09/05/2022"))
+        holiday_table.setItem(3, 2, QTableWidgetItem("Monday"))
+        holiday_table.setItem(4, 0, QTableWidgetItem("Deepavali"))
+        holiday_table.setItem(4, 1, QTableWidgetItem("10/24/2022"))
+        holiday_table.setItem(4, 2, QTableWidgetItem("Monday"))
+        holiday_table.setItem(5, 0, QTableWidgetItem("Extended Diwali Holiday"))
+        holiday_table.setItem(5, 1, QTableWidgetItem("10/25/2022"))
+        holiday_table.setItem(5, 2, QTableWidgetItem("Tuesday"))
+        holiday_table.setItem(6, 0, QTableWidgetItem("Pre-Thanks giving Day"))
+        holiday_table.setItem(6, 1, QTableWidgetItem("11/23/2022"))
+        holiday_table.setItem(6, 2, QTableWidgetItem("Wednesday"))
+        holiday_table.setItem(7, 0, QTableWidgetItem("Thanksgiving Day "))
+        holiday_table.setItem(7, 1, QTableWidgetItem("11/24/2022"))
+        holiday_table.setItem(7, 2, QTableWidgetItem("Thursday"))
+        holiday_table.setItem(8, 0, QTableWidgetItem("Day after Thanksgiving Day"))
+        holiday_table.setItem(8, 1, QTableWidgetItem("11/25/2022"))
+        holiday_table.setItem(8, 2, QTableWidgetItem("Friday"))
         self.punchout_clicked = False
-        
 
-        # idle time function start
-        self.idle_time = 0
-        self.notification_shown = False
-        self.timer2 = QTimer(self)
-        self.timer2.timeout.connect(self.check_idle_time)
-        self.timer2.start(1000)  # Check idle time every second
 
-    def start(self):
+    def start_function(self):
     # Start the timer
-
-        if self.punchout_clicked == False:
-            self.timer1.start()
+        if self.punchout_clicked == False :
             table_widget = self.findChild(QTableWidget, "tableWidget")
             current_date = QDate.currentDate()
+            self.timer1 = QTimer(self)
+            self.timer1.setInterval(1000)
+            self.timer1.timeout.connect(self.update_time)
+            self.timer1.start()
+
+            self.timer = QTimer(self)
+            self.timer.timeout.connect(self.check_idle_time)
+            self.timer.start(1000)  # 1000 milliseconds = 1 second
+            
             # Get the current system time
             current_time = QTime.currentTime()
             current_time.toString("hh:mm:ss")
@@ -116,24 +142,25 @@ class dashboard(QMainWindow):
             
             # Get the current number of rows in the table
             row_count = table_widget.rowCount()
+            print(row_count)
 
             # Insert a new row at the end of the table
             table_widget.insertRow(row_count)
-            # Insert the current date in the first row and first column of the table
-            # table_widget.setItem(0, 0, QTableWidgetItem(current_date.toString()))
-            # table_widget.setItem(0, 1, QTableWidgetItem(time_string))
+
+            table_widget.setItem(row_count, 0, QTableWidgetItem(current_date.toString()))
+            
+            table_widget.setItem(row_count, 1, QTableWidgetItem(time_string))
 
             
-            table_widget.setItem(row_count, 0, QTableWidgetItem(current_date.toString()))
-            table_widget.setItem(row_count, 1, QTableWidgetItem(time_string))
 
         self.punchout_clicked = True
 
 
 
-    def stop(self):
+    def stop_function(self):
         # Stop the timer
         self.timer1.stop()
+        self.timer.stop()
         table_widget = self.findChild(QTableWidget, "tableWidget")
         current_time = QTime.currentTime()
         current_time.toString("hh:mm:ss")
@@ -144,16 +171,13 @@ class dashboard(QMainWindow):
         last_row = table_widget.rowCount() - 1
         table_widget.setItem(last_row, 2, QTableWidgetItem(time_string))
         table_widget.setItem(last_row, 3, QTableWidgetItem(time))
-
+        self.time_label.setText('00:00:00')
+        self.elapsed_time = 0
         self.punchout_clicked = False
 
     def update_time(self):
         # Increment the elapsed time by 1 second
         self.elapsed_time += 1
-        # Format the elapsed time as a string in the HH:MM:SS format
-        # elapsed_time_str = QTime(0, 0).addSecs(self.elapsed_time).toString('HH:mm:ss')
-        # # Update the time display with the formatted elapsed time
-        # self.time_label.setText(elapsed_time_str)
 
         # Convert the elapsed time to a string and update the label
         time_string = '{:02d}:{:02d}:{:02d}'.format(
@@ -164,33 +188,20 @@ class dashboard(QMainWindow):
         self.time_label.setText(time_string)
 
 
-
-# idle time function start
-        # self.idle_time = 0
-        # self.notification_shown = False
-        # self.timer = QTimer(self)
-        # self.timer.timeout.connect(self.check_idle_time)
-        # self.timer.start(1000)  # Check idle time every second
-
     def check_idle_time(self):
-        if sys.platform == "win32":
-            self.idle_time = pyautogui.idle()
-        else:
-            output = subprocess.check_output(["xprintidle"])
-            print(output)
-            self.idle_time = int(output) / 1000.0
-            
-        if self.idle_time > 60 and not self.notification_shown:
-            print(f"The system has been idle for {self.idle_time} seconds.")
-            self.show_notification()
-            self.notification_shown = True
+        # Run the xprintidle command and get the output
+        output = subprocess.run(["xprintidle"], stdout=subprocess.PIPE).stdout.decode().strip()
 
-    def show_notification(self):
-        message_box = QMessageBox()
-        message_box.setText("The system has been idle for more than 60 seconds.")
-        message_box.exec_()
-# system idle funtion end
-        
+        # Parse the output as an integer
+        idle_time = int(output)
+
+        # Check if the idle time is 5 seconds or more
+        if idle_time >= 5000:  # 5000 milliseconds = 5 seconds
+            # Show a notification using a message box
+            QMessageBox.warning(self, "Idle Time", "You have been idle for 5 seconds!")
+    
+
+
 app = QApplication(sys.argv)
 mainwindow = Login()
 widget = QtWidgets.QStackedWidget()
